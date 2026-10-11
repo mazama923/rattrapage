@@ -1,0 +1,69 @@
+[env]
+PROJECT_NAME = "Rattrapage"
+SCHEME = "Rattrapage"
+DERIVED_DATA_PATH = ".build"
+BUILD_DESTINATION = "generic/platform=tvOS"
+TEST_DESTINATION = "platform=tvOS Simulator,name=Apple TV 4K (3rd generation)"
+
+[tasks.doctor]
+description = "Check Xcode, XcodeGen, tvOS SDK, and test simulator availability"
+run = '''
+set -eu
+
+command -v xcodebuild >/dev/null || { echo "Missing prerequisite: Xcode command-line tools." >&2; exit 1; }
+command -v xcodegen >/dev/null || { echo "Missing prerequisite: XcodeGen." >&2; exit 1; }
+command -v xcrun >/dev/null || { echo "Missing prerequisite: Xcode runtime tools." >&2; exit 1; }
+
+xcodebuild -version
+xcodegen --version
+
+if ! xcodebuild -showsdks | grep -q "appletvos"; then
+  echo "No tvOS SDK was found in the selected Xcode." >&2
+  exit 1
+fi
+
+if ! xcrun simctl list devices available | grep -Fq "Apple TV 4K (3rd generation)"; then
+  echo "The configured tvOS simulator is unavailable: ${TEST_DESTINATION}" >&2
+  echo "Install it in Xcode or update TEST_DESTINATION in .mise.toml." >&2
+  exit 1
+fi
+
+echo "Development environment is ready."
+'''
+
+[tasks.generate]
+description = "Generate the Xcode project from project.yml"
+depends = ["doctor"]
+run = "xcodegen generate"
+
+[tasks.test]
+description = "Run tvOS unit tests in the configured simulator"
+depends = ["generate"]
+run = '''
+xcodebuild \
+  -project "${PROJECT_NAME}.xcodeproj" \
+  -scheme "${SCHEME}" \
+  -configuration Debug \
+  -destination "${TEST_DESTINATION}" \
+  -derivedDataPath "${DERIVED_DATA_PATH}" \
+  CODE_SIGNING_ALLOWED=NO \
+  test
+'''
+
+[tasks.build]
+description = "Build the tvOS app without code signing"
+depends = ["generate"]
+run = '''
+xcodebuild \
+  -project "${PROJECT_NAME}.xcodeproj" \
+  -scheme "${SCHEME}" \
+  -configuration Debug \
+  -destination "${BUILD_DESTINATION}" \
+  -derivedDataPath "${DERIVED_DATA_PATH}" \
+  CODE_SIGNING_ALLOWED=NO \
+  build
+'''
+
+[tasks.clean]
+description = "Remove local build artifacts"
+run = "rm -rf .build"
