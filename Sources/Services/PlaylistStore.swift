@@ -9,8 +9,8 @@ final class PlaylistStore: ObservableObject {
     // Une mise à jour peut donc en ajouter sans effacer les playlists de l'utilisateur.
     private static let builtInSources = [
         PlaylistSource(
-            name: "Free-TV (community catalogue)",
-            url: "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlist.m3u8",
+            name: "IPTV-org (Countrie FR)",
+            url: "https://iptv-org.github.io/iptv/countries/fr.m3u",
             isBuiltIn: true
         )
     ]
