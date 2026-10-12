@@ -41,7 +41,11 @@ struct ChannelListView: View {
                         ForEach(displayedChannels) { channel in
                             HStack(spacing: 16) {
                                 Button {
-                                    playerManager.play(channel)
+                                    if OfficialChannelAppService.officialApp(for: channel.name) == nil {
+                                        playerManager.play(channel)
+                                    } else {
+                                        playerManager.stop()
+                                    }
                                     selectedChannel = channel
                                 } label: {
                                     ChannelRow(
@@ -213,6 +217,12 @@ private struct ChannelRow: View {
                     }
                 } else if let nextProgram = programs.first {
                     Text("Next: \(nextProgram.title)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                if let officialApp = OfficialChannelAppService.officialApp(for: channel.name) {
+                    Label("Official app: \(officialApp.displayName)", systemImage: "app")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

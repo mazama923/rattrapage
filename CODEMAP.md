@@ -35,15 +35,14 @@ SettingsView
 
 ```text
 ChannelListView
-→ PlayerManager.play(channel)
-→ AVPlayer
-→ PlayerView
-├── PlayerManager observes seekable DVR ranges
-├── SwiftUI timeshift controls (when a DVR range exists)
-└── AVPlayerViewController native controls
+→ OfficialChannelAppService
+├── known restricted channel → PlayerView official-app notice (no M3U playback attempt)
+└── other channel → PlayerManager.play(channel) → AVPlayerViewController
+    ├── PlayerManager observes seekable DVR ranges
+    └── SwiftUI timeshift controls (when a DVR range exists)
 ```
 
-`PlayerManager` owns one `AVPlayer`, tracks whether it is playing, and refreshes the current DVR window from the item's seekable time ranges. Seeking is clamped to that window, and “LIVE” seeks just behind its moving edge. `PlayerView` layers SwiftUI status and timeshift buttons over an `AVPlayerViewController` adapted with `UIViewControllerRepresentable`; the native tvOS controls remain enabled.
+`OfficialChannelAppService` recognizes TF1/TMC/TFX as requiring TF1+ and M6/W9/6ter as requiring M6+. Those channels show the official app notice and do not start their M3U streams. `PlayerManager` owns one `AVPlayer`, tracks whether it is playing, and refreshes the current DVR window from the item's seekable time ranges. Seeking is clamped to that window, and “LIVE” seeks just behind its moving edge. For supported streams, `PlayerView` layers SwiftUI status and timeshift buttons over an `AVPlayerViewController` adapted with `UIViewControllerRepresentable`; the native tvOS controls remain enabled.
 
 ### Browse metadata, favorites, and guide
 
@@ -86,14 +85,16 @@ SettingsView
 | `Sources/Services/EPGLoader.swift` | XMLTV HTTP(S) download and response validation | Guide network loading changes. |
 | `Sources/Services/XMLTVParser.swift` | XMLTV parsing and current/next programme selection | Guide format support changes. |
 | `Sources/Services/PlayerManager.swift` | AVPlayer lifecycle, playlist-declared User-Agent, playback errors, and DVR-window seeking | Playback, pause, or timeshift behavior changes. |
+| `Sources/Services/OfficialChannelAppService.swift` | Maps TF1-family and M6-family channel names to their official tvOS apps | Official-app channel routing changes. |
 | `Sources/Views/ChannelListView.swift` | Searchable channel screen, filters, and navigation state | Channel list or loading UX changes. |
 | `Sources/Views/SettingsView.swift` | Source selection and editing UI | Playlist-source UX changes. |
-| `Sources/Views/PlayerView.swift` | Native player bridge, timeshift controls, and visible playback errors | Player-controller presentation changes. |
+| `Sources/Views/PlayerView.swift` | Native player bridge, timeshift controls, playback errors, and official-app notice | Player-controller presentation changes. |
 | `Tests/M3UParserTests.swift` | Playlist metadata parsing regression coverage | Parser behavior changes. |
 | `Tests/XMLTVParserTests.swift` | XMLTV parsing regression coverage | Guide parsing changes. |
 | `Tests/FavoritesStoreTests.swift` | Per-playlist favorites persistence coverage | Favorite persistence changes. |
 | `Tests/PlaylistStoreTests.swift` | Persistence regression coverage | Store behavior changes. |
 | `Tests/PlayerManagerTests.swift` | Timeshift seeking regression coverage | Seek-window behavior changes. |
+| `Tests/OfficialChannelAppServiceTests.swift` | Official-app mapping regression coverage | Channel-to-app mapping changes. |
 
 ## Non-negotiable generated files
 

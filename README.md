@@ -13,7 +13,8 @@ A small tvOS 17+ IPTV player, built with Swift and SwiftUI to learn Apple framew
 - Browse channels using the tvOS focus engine, with playlist logos and category filters when the M3U provides `tvg-logo` and `group-title`.
 - Mark channels as favorites; favorites are saved separately for each playlist and can be filtered.
 - Optionally enter an XMLTV guide URL for a playlist; current and next programmes are matched through the channel's `tvg-id`.
-- Play a channel fullscreen with `AVPlayerViewController`, with playback failures shown on screen.
+- Play supported playlist channels fullscreen with `AVPlayerViewController`, with playback failures shown on screen.
+- Identify TF1, M6, W9, 6ter, TMC, and TFX entries and direct viewers to the corresponding official tvOS app instead of attempting their unavailable M3U streams.
 - Pause, rewind or fast-forward by 30 seconds, and return to live when the stream exposes a DVR window.
 
 The player checks the HLS seekable time ranges while playback runs. Timeshift buttons appear only when a seekable window is available; the native tvOS playback controls remain available for every stream.
@@ -41,10 +42,11 @@ It is a third-party catalogue: stream availability, supported formats, and distr
 | `Sources/Services/EPGLoader.swift` | XMLTV guide download and HTTP response validation. |
 | `Sources/Services/XMLTVParser.swift` | XMLTV parser that retains the current and next programme per channel. |
 | `Sources/Services/PlayerManager.swift` | Shared `AVPlayer` lifecycle, playback state, and DVR-window seeking. |
+| `Sources/Services/OfficialChannelAppService.swift` | Maps supported French channels to the official tvOS app required for playback. |
 | `Sources/Views/ChannelListView.swift` | Focusable channel list, logos, filters, favorites actions, guide text, and screen state. |
 | `Sources/Views/SettingsView.swift` | Saved playlist selection, creation, and deletion. |
-| `Sources/Views/PlayerView.swift` | SwiftUI status and timeshift controls over the native player controller. |
-| `Tests/` | Unit tests for M3U/XMLTV parsing, playlist/favorite persistence, and timeshift seek bounds. |
+| `Sources/Views/PlayerView.swift` | Native playback controls, timeshift controls, playback status, and official-app notice. |
+| `Tests/` | Unit tests for M3U/XMLTV parsing, playlist/favorite persistence, timeshift seek bounds, and official-app channel mapping. |
 
 ## Why this SwiftUI architecture
 

@@ -3,10 +3,19 @@ import SwiftUI
 
 struct PlayerView: View {
     @EnvironmentObject private var playerManager: PlayerManager
+    @Environment(\.dismiss) private var dismiss
     @State private var arePlaybackControlsVisible = true
     let channel: Channel
 
     var body: some View {
+        if let officialApp = OfficialChannelAppService.officialApp(for: channel.name) {
+            officialAppNotice(officialApp)
+        } else {
+            playbackView
+        }
+    }
+
+    private var playbackView: some View {
         ZStack {
             PlayerControllerView(player: playerManager.player) { isVisible in
                 withAnimation(.easeInOut(duration: 0.2)) {
@@ -61,6 +70,33 @@ struct PlayerView: View {
             .allowsHitTesting(arePlaybackControlsVisible)
             .accessibilityHidden(!arePlaybackControlsVisible)
         }
+    }
+
+    private func officialAppNotice(_ officialApp: OfficialChannelApp) -> some View {
+        VStack(spacing: 28) {
+            Image(systemName: "app")
+                .font(.system(size: 64))
+                .foregroundStyle(.secondary)
+
+            Text(channel.name)
+                .font(.largeTitle.bold())
+
+            Text("Official app required")
+                .font(.title2.bold())
+
+            Text("This channel cannot be played from its M3U stream in Rattrapage. Open the official \(officialApp.displayName) app on your Apple TV to watch it.")
+                .font(.title3)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 800)
+                .foregroundStyle(.secondary)
+
+            Button("Close") {
+                dismiss()
+            }
+            .buttonStyle(.borderedProminent)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.black)
     }
 
     private var timeshiftControls: some View {
