@@ -57,25 +57,38 @@ final class PlaylistStore: ObservableObject {
 
     /// Ajoute une URL personnalisée et la sélectionne. Une URL déjà connue n'est pas dupliquée.
     @discardableResult
-    func add(name: String, url: String) -> PlaylistSource? {
+    func add(name: String, url: String, epgURL: String? = nil) -> PlaylistSource? {
         let trimmedURL = url.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard
-            let parsedURL = URL(string: trimmedURL),
-            let scheme = parsedURL.scheme?.lowercased(),
-            scheme == "http" || scheme == "https"
-        else {
+        let trimmedEPGURL = epgURL?.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard isHTTPURL(trimmedURL) else { return nil }
+        if let trimmedEPGURL, !trimmedEPGURL.isEmpty, !isHTTPURL(trimmedEPGURL) {
             return nil
         }
+        guard let parsedURL = URL(string: trimmedURL) else { return nil }
+        let normalizedEPGURL = trimmedEPGURL.flatMap { $0.isEmpty ? nil : $0 }
 
-        if let existingSource = sources.first(where: { $0.url == trimmedURL }) {
-            select(existingSource)
-            return existingSource
+        if let existingIndex = sources.firstIndex(where: { $0.url == trimmedURL }) {
+            let existingSource = sources[existingIndex]
+            if normalizedEPGURL != nil {
+                sources[existingIndex] = PlaylistSource(
+                    id: existingSource.id,
+                    name: existingSource.name,
+                    url: existingSource.url,
+                    epgURL: normalizedEPGURL,
+                    isBuiltIn: existingSource.isBuiltIn
+                )
+                persist()
+            }
+            let updatedSource = sources[existingIndex]
+            select(updatedSource)
+            return updatedSource
         }
 
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let source = PlaylistSource(
             name: trimmedName.isEmpty ? (parsedURL.host ?? "Custom playlist") : trimmedName,
-            url: trimmedURL
+            url: trimmedURL,
+            epgURL: normalizedEPGURL
         )
         sources.append(source)
         select(source)
@@ -96,6 +109,13 @@ final class PlaylistStore: ObservableObject {
     func select(_ source: PlaylistSource) {
         selectedSourceID = source.id
         persist()
+    }
+
+    private func isHTTPURL(_ value: String) -> Bool {
+        guard let url = URL(string: value), let scheme = url.scheme?.lowercased() else {
+            return false
+        }
+        return scheme == "http" || scheme == "https"
     }
 
     private func persist() {

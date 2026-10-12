@@ -3,11 +3,16 @@ import SwiftUI
 
 struct PlayerView: View {
     @EnvironmentObject private var playerManager: PlayerManager
+    @State private var arePlaybackControlsVisible = true
     let channel: Channel
 
     var body: some View {
         ZStack {
-            PlayerControllerView(player: playerManager.player)
+            PlayerControllerView(player: playerManager.player) { isVisible in
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    arePlaybackControlsVisible = isVisible
+                }
+            }
 
             VStack(alignment: .leading) {
                 HStack {
@@ -40,6 +45,9 @@ struct PlayerView: View {
             }
             .padding(.horizontal, 64)
             .padding(.vertical, 48)
+            .opacity(arePlaybackControlsVisible ? 1 : 0)
+            .allowsHitTesting(arePlaybackControlsVisible)
+            .accessibilityHidden(!arePlaybackControlsVisible)
         }
     }
 
@@ -82,15 +90,41 @@ struct PlayerView: View {
 /// Pont entre SwiftUI et le contrôleur vidéo natif, pour garder les contrôles tvOS.
 private struct PlayerControllerView: UIViewControllerRepresentable {
     let player: AVPlayer?
+    let onControlsVisibilityChange: (Bool) -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onControlsVisibilityChange: onControlsVisibilityChange)
+    }
 
     func makeUIViewController(context: Context) -> AVPlayerViewController {
         let controller = AVPlayerViewController()
         controller.showsPlaybackControls = true
+        controller.delegate = context.coordinator
         controller.player = player
         return controller
     }
 
     func updateUIViewController(_ controller: AVPlayerViewController, context: Context) {
+        context.coordinator.onControlsVisibilityChange = onControlsVisibilityChange
+        controller.delegate = context.coordinator
         controller.player = player
+    }
+
+    final class Coordinator: NSObject, AVPlayerViewControllerDelegate {
+        var onControlsVisibilityChange: (Bool) -> Void
+
+        init(onControlsVisibilityChange: @escaping (Bool) -> Void) {
+            self.onControlsVisibilityChange = onControlsVisibilityChange
+        }
+
+        func playerViewController(
+            _ playerViewController: AVPlayerViewController,
+            willTransitionToVisibilityOfTransportBar visible: Bool,
+            with animationCoordinator: AVPlayerViewControllerAnimationCoordinator
+        ) {
+            animationCoordinator.addCoordinatedAnimations { [weak self] in
+                self?.onControlsVisibilityChange(visible)
+            } completion: { _ in }
+        }
     }
 }

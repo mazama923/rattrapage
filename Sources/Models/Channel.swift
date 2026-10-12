@@ -8,12 +8,20 @@ struct Channel: Identifiable, Hashable {
     let streamURL: URL
     let logoURL: URL?
     let group: String?
+    let guideID: String?
 
-    init(name: String, streamURL: URL, logoURL: URL? = nil, group: String? = nil) {
+    init(
+        name: String,
+        streamURL: URL,
+        logoURL: URL? = nil,
+        group: String? = nil,
+        guideID: String? = nil
+    ) {
         self.id = streamURL.absoluteString
         self.name = name
         self.streamURL = streamURL
         self.logoURL = logoURL
         self.group = group
+        self.guideID = guideID
     }
 }

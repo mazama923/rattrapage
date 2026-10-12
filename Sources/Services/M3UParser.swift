@@ -43,7 +43,8 @@ struct M3UParser {
                     name: metadata.name,
                     streamURL: streamURL,
                     logoURL: logoURL,
-                    group: metadata.group
+                    group: metadata.group,
+                    guideID: metadata.guideID
                 )
             )
         }
@@ -67,8 +68,19 @@ struct M3UParser {
         return Metadata(
             name: name.isEmpty ? "Unnamed channel" : name,
             logoURLString: attribute(named: "tvg-logo", in: extinf),
-            group: attribute(named: "group-title", in: extinf)
+            group: nonEmptyAttribute(named: "group-title", in: extinf),
+            guideID: nonEmptyAttribute(named: "tvg-id", in: extinf)
         )
+    }
+
+    private func nonEmptyAttribute(named name: String, in text: String) -> String? {
+        guard let value = attribute(named: name, in: text)?
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+            !value.isEmpty
+        else {
+            return nil
+        }
+        return value
     }
 
     private func attribute(named name: String, in text: String) -> String? {
@@ -90,5 +102,6 @@ struct M3UParser {
         let name: String
         let logoURLString: String?
         let group: String?
+        let guideID: String?
     }
 }

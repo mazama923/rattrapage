@@ -31,7 +31,11 @@ final class PlaylistStoreTests: XCTestCase {
     func testAddPersistsSourceAndSelection() throws {
         let store = PlaylistStore(userDefaults: userDefaults)
         let source = try XCTUnwrap(
-            store.add(name: "My playlist", url: "https://example.com/playlist.m3u8")
+            store.add(
+                name: "My playlist",
+                url: "https://example.com/playlist.m3u8",
+                epgURL: "https://example.com/guide.xml"
+            )
         )
 
         let restoredStore = PlaylistStore(userDefaults: userDefaults)
@@ -39,6 +43,7 @@ final class PlaylistStoreTests: XCTestCase {
         XCTAssertTrue(restoredStore.sources.contains { $0.id == source.id })
         XCTAssertEqual(restoredStore.selectedSourceID, source.id)
         XCTAssertEqual(restoredStore.selectedSource?.name, "My playlist")
+        XCTAssertEqual(restoredStore.selectedSource?.epgURL, "https://example.com/guide.xml")
     }
 
     func testAddDoesNotDuplicateExistingURL() throws {
@@ -54,6 +59,18 @@ final class PlaylistStoreTests: XCTestCase {
         XCTAssertEqual(
             store.sources.filter { $0.url == "https://example.com/playlist.m3u8" }.count,
             1
+        )
+    }
+
+    func testAddRejectsInvalidEPGURL() {
+        let store = PlaylistStore(userDefaults: userDefaults)
+
+        XCTAssertNil(
+            store.add(
+                name: "My playlist",
+                url: "https://example.com/playlist.m3u8",
+                epgURL: "file:///guide.xml"
+            )
         )
     }
 

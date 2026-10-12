@@ -9,6 +9,8 @@ RattrapageApp
     └── ChannelListView
         ├── SettingsView
         └── PlayerView
+
+RattrapageApp also owns FavoritesStore, which saves favorite channel IDs separately for each playlist.
 ```
 
 `RattrapageApp` owns shared objects with `@StateObject` and injects them with `@EnvironmentObject`. This gives every screen the same player and playlist state for the life of the app.
@@ -43,6 +45,18 @@ ChannelListView
 
 `PlayerManager` owns one `AVPlayer`, tracks whether it is playing, and refreshes the current DVR window from the item's seekable time ranges. Seeking is clamped to that window, and “LIVE” seeks just behind its moving edge. `PlayerView` layers SwiftUI status and timeshift buttons over an `AVPlayerViewController` adapted with `UIViewControllerRepresentable`; the native tvOS controls remain enabled.
 
+### Browse metadata, favorites, and guide
+
+```text
+M3UParser → Channel (logo, group, tvg-id)
+ChannelListView → searchable channel list + AsyncImage + category/favorites filters
+SettingsView → PlaylistSource.epgURL
+EPGLoader → XMLTVParser → current and next TVProgram per tvg-id
+FavoritesStore → UserDefaults (separate favorites per playlist)
+```
+
+The EPG URL is optional and supplied alongside a playlist. XMLTV programme IDs are matched to the playlist's `tvg-id`; entries without a matching ID have no guide text. The parser keeps only the current and next programme per channel to avoid retaining the full guide in memory. EPG download errors do not prevent playlist playback.
+
 ### Persist playlist sources
 
 ```text
@@ -52,7 +66,7 @@ SettingsView
 → UserDefaults
 ```
 
-`PlaylistStore` persists sources as JSON `Data` because `UserDefaults` cannot store custom Swift structs directly. Built-in sources are merged at launch so future app versions can add sources without deleting user-created entries.
+`PlaylistStore` persists sources as JSON `Data` because `UserDefaults` cannot store custom Swift structs directly. Built-in sources are merged at launch so future app versions can add sources without deleting user-created entries. The optional `epgURL` field remains compatible with saved sources that predate guide support.
 
 ## File responsibilities
 
@@ -61,16 +75,22 @@ SettingsView
 | `project.yml` | XcodeGen source of truth, deployment target, ATS | Changing target, resources, capabilities, or test targets. |
 | `.mise.toml` | Reproducible local commands | Changing validation commands or simulator defaults. |
 | `Sources/App/RattrapageApp.swift` | App entry and shared-object ownership | Adding app-wide state. |
-| `Sources/Models/Channel.swift` | Parsed channel value | Playlist channel data changes. |
+| `Sources/Models/Channel.swift` | Immutable channel data, including logo, category, and XMLTV matching ID | Playlist channel data changes. |
+| `Sources/Models/TVProgram.swift` | One current or upcoming guide entry | Guide presentation data changes. |
 | `Sources/Models/PlaylistSource.swift` | Saved playlist-source value | Playlist-source data changes. |
 | `Sources/Services/M3UParser.swift` | M3U text parsing | Supporting metadata or parsing behavior changes. |
 | `Sources/Services/PlaylistLoader.swift` | Playlist download and decoding | Network loading behavior changes. |
-| `Sources/Services/PlaylistStore.swift` | Source persistence and built-in sources | Adding defaults or persistence migrations. |
+| `Sources/Services/PlaylistStore.swift` | Source persistence and built-in sources, including optional EPG URL | Adding defaults or persistence migrations. |
+| `Sources/Services/FavoritesStore.swift` | Per-playlist favorite persistence | Favorite behavior changes. |
+| `Sources/Services/EPGLoader.swift` | XMLTV HTTP(S) download and response validation | Guide network loading changes. |
+| `Sources/Services/XMLTVParser.swift` | XMLTV parsing and current/next programme selection | Guide format support changes. |
 | `Sources/Services/PlayerManager.swift` | AVPlayer lifecycle and DVR-window seeking | Playback, pause, or timeshift behavior changes. |
-| `Sources/Views/ChannelListView.swift` | Channel screen and navigation state | Channel list or loading UX changes. |
+| `Sources/Views/ChannelListView.swift` | Searchable channel screen, filters, and navigation state | Channel list or loading UX changes. |
 | `Sources/Views/SettingsView.swift` | Source selection and editing UI | Playlist-source UX changes. |
 | `Sources/Views/PlayerView.swift` | Native player bridge and timeshift controls | Player-controller presentation changes. |
-| `Tests/M3UParserTests.swift` | Parser regression coverage | Parser behavior changes. |
+| `Tests/M3UParserTests.swift` | Playlist metadata parsing regression coverage | Parser behavior changes. |
+| `Tests/XMLTVParserTests.swift` | XMLTV parsing regression coverage | Guide parsing changes. |
+| `Tests/FavoritesStoreTests.swift` | Per-playlist favorites persistence coverage | Favorite persistence changes. |
 | `Tests/PlaylistStoreTests.swift` | Persistence regression coverage | Store behavior changes. |
 | `Tests/PlayerManagerTests.swift` | Timeshift seeking regression coverage | Seek-window behavior changes. |
 

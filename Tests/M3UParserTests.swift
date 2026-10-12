@@ -5,7 +5,7 @@ final class M3UParserTests: XCTestCase {
     func testParseExtractsChannelMetadata() throws {
         let playlist = """
         #EXTM3U
-        #EXTINF:-1 tvg-logo="https://images.example/news.png" group-title="News",Example News
+        #EXTINF:-1 tvg-id="example.news" tvg-logo="https://images.example/news.png" group-title="News",Example News
         https://streams.example/news/index.m3u8
         """
 
@@ -16,6 +16,7 @@ final class M3UParserTests: XCTestCase {
         XCTAssertEqual(channels[0].streamURL, URL(string: "https://streams.example/news/index.m3u8"))
         XCTAssertEqual(channels[0].logoURL, URL(string: "https://images.example/news.png"))
         XCTAssertEqual(channels[0].group, "News")
+        XCTAssertEqual(channels[0].guideID, "example.news")
     }
 
     func testParseResolvesRelativeStreamAndLogoURLs() throws {

@@ -6,12 +6,14 @@ struct RattrapageApp: App {
     @StateObject private var playerManager = PlayerManager()
     // Le store est partagé pour que les réglages et la liste utilisent les mêmes sources.
     @StateObject private var playlistStore = PlaylistStore()
+    @StateObject private var favoritesStore = FavoritesStore()
 
     var body: some Scene {
         WindowGroup {
             ChannelListView()
                 .environmentObject(playerManager)
                 .environmentObject(playlistStore)
+                .environmentObject(favoritesStore)
         }
     }
 }

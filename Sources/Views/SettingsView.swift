@@ -8,6 +8,7 @@ struct SettingsView: View {
 
     @State private var newPlaylistName = ""
     @State private var newPlaylistURL = ""
+    @State private var newEPGURL = ""
     @State private var inputError: String?
 
     var body: some View {
@@ -44,6 +45,9 @@ struct SettingsView: View {
                     TextField("https://example.com/playlist.m3u", text: $newPlaylistURL)
                         .textInputAutocapitalization(.never)
                         .disableAutocorrection(true)
+                    TextField("XMLTV guide URL (optional)", text: $newEPGURL)
+                        .textInputAutocapitalization(.never)
+                        .disableAutocorrection(true)
 
                     if let inputError {
                         Text(inputError)
@@ -52,6 +56,10 @@ struct SettingsView: View {
 
                     Button("Save and load", action: addAndLoadPlaylist)
                         .disabled(isLoading || newPlaylistURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
+                    Text("The optional guide must be an XMLTV HTTP(S) URL. Channel IDs are matched using tvg-id.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                 }
 
                 Text("Community playlists are maintained by third parties. Their availability, supported stream formats, and distribution rights can change independently of Rattrapage.")
@@ -68,14 +76,19 @@ struct SettingsView: View {
     }
 
     private func addAndLoadPlaylist() {
-        guard let source = playlistStore.add(name: newPlaylistName, url: newPlaylistURL) else {
-            inputError = "Enter a valid HTTP(S) playlist URL."
+        guard let source = playlistStore.add(
+            name: newPlaylistName,
+            url: newPlaylistURL,
+            epgURL: newEPGURL
+        ) else {
+            inputError = "Enter valid HTTP(S) URLs for the playlist and TV guide."
             return
         }
 
         inputError = nil
         newPlaylistName = ""
         newPlaylistURL = ""
+        newEPGURL = ""
         onLoad(source)
     }
 }
