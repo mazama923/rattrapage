@@ -8,12 +8,12 @@ A small tvOS 17+ IPTV player, built with Swift and SwiftUI to learn Apple framew
 
 - Save and select multiple HTTP(S) M3U/M3U8 playlist URLs.
 - Restore saved playlists and the selected source after relaunching the app.
-- Download and parse `#EXTINF` entries with `URLSession` and `async/await`.
+- Download and parse `#EXTINF` entries with `URLSession` and `async/await`, including playlist-declared `http-user-agent` settings for stream requests.
 - Search channels by name using the native tvOS search field; results combine with category and favorites filters.
 - Browse channels using the tvOS focus engine, with playlist logos and category filters when the M3U provides `tvg-logo` and `group-title`.
 - Mark channels as favorites; favorites are saved separately for each playlist and can be filtered.
 - Optionally enter an XMLTV guide URL for a playlist; current and next programmes are matched through the channel's `tvg-id`.
-- Play a channel fullscreen with `AVPlayerViewController`.
+- Play a channel fullscreen with `AVPlayerViewController`, with playback failures shown on screen.
 - Pause, rewind or fast-forward by 30 seconds, and return to live when the stream exposes a DVR window.
 
 The player checks the HLS seekable time ranges while playback runs. Timeshift buttons appear only when a seekable window is available; the native tvOS playback controls remain available for every stream.

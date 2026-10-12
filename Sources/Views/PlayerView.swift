@@ -14,6 +14,18 @@ struct PlayerView: View {
                 }
             }
 
+            if let playbackErrorMessage = playerManager.playbackErrorMessage {
+                VStack {
+                    Spacer()
+                    Text("Playback failed: \(playbackErrorMessage)")
+                        .font(.footnote)
+                        .padding(16)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                }
+                .padding(48)
+                .allowsHitTesting(false)
+            }
+
             VStack(alignment: .leading) {
                 HStack {
                     VStack(alignment: .leading, spacing: 8) {

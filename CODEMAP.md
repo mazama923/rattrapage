@@ -48,10 +48,11 @@ ChannelListView
 ### Browse metadata, favorites, and guide
 
 ```text
-M3UParser → Channel (logo, group, tvg-id)
+M3UParser → Channel (logo, group, tvg-id, optional User-Agent)
 ChannelListView → searchable channel list + AsyncImage + category/favorites filters
 SettingsView → PlaylistSource.epgURL
 EPGLoader → XMLTVParser → current and next TVProgram per tvg-id
+Channel.userAgent → AVURLAsset → AVPlayer request headers
 FavoritesStore → UserDefaults (separate favorites per playlist)
 ```
 
@@ -75,19 +76,19 @@ SettingsView
 | `project.yml` | XcodeGen source of truth, deployment target, ATS | Changing target, resources, capabilities, or test targets. |
 | `.mise.toml` | Reproducible local commands | Changing validation commands or simulator defaults. |
 | `Sources/App/RattrapageApp.swift` | App entry and shared-object ownership | Adding app-wide state. |
-| `Sources/Models/Channel.swift` | Immutable channel data, including logo, category, and XMLTV matching ID | Playlist channel data changes. |
+| `Sources/Models/Channel.swift` | Immutable channel data, including logo, category, guide ID, and optional User-Agent | Playlist channel data changes. |
 | `Sources/Models/TVProgram.swift` | One current or upcoming guide entry | Guide presentation data changes. |
 | `Sources/Models/PlaylistSource.swift` | Saved playlist-source value | Playlist-source data changes. |
-| `Sources/Services/M3UParser.swift` | M3U text parsing | Supporting metadata or parsing behavior changes. |
+| `Sources/Services/M3UParser.swift` | M3U metadata and VLC User-Agent directive parsing | Supporting metadata or parsing behavior changes. |
 | `Sources/Services/PlaylistLoader.swift` | Playlist download and decoding | Network loading behavior changes. |
 | `Sources/Services/PlaylistStore.swift` | Source persistence and built-in sources, including optional EPG URL | Adding defaults or persistence migrations. |
 | `Sources/Services/FavoritesStore.swift` | Per-playlist favorite persistence | Favorite behavior changes. |
 | `Sources/Services/EPGLoader.swift` | XMLTV HTTP(S) download and response validation | Guide network loading changes. |
 | `Sources/Services/XMLTVParser.swift` | XMLTV parsing and current/next programme selection | Guide format support changes. |
-| `Sources/Services/PlayerManager.swift` | AVPlayer lifecycle and DVR-window seeking | Playback, pause, or timeshift behavior changes. |
+| `Sources/Services/PlayerManager.swift` | AVPlayer lifecycle, playlist-declared User-Agent, playback errors, and DVR-window seeking | Playback, pause, or timeshift behavior changes. |
 | `Sources/Views/ChannelListView.swift` | Searchable channel screen, filters, and navigation state | Channel list or loading UX changes. |
 | `Sources/Views/SettingsView.swift` | Source selection and editing UI | Playlist-source UX changes. |
-| `Sources/Views/PlayerView.swift` | Native player bridge and timeshift controls | Player-controller presentation changes. |
+| `Sources/Views/PlayerView.swift` | Native player bridge, timeshift controls, and visible playback errors | Player-controller presentation changes. |
 | `Tests/M3UParserTests.swift` | Playlist metadata parsing regression coverage | Parser behavior changes. |
 | `Tests/XMLTVParserTests.swift` | XMLTV parsing regression coverage | Guide parsing changes. |
 | `Tests/FavoritesStoreTests.swift` | Per-playlist favorites persistence coverage | Favorite persistence changes. |

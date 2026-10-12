@@ -29,6 +29,13 @@ struct M3UParser {
                 continue
             }
 
+            let userAgentPrefix = "#EXTVLCOPT:http-user-agent="
+            if line.hasPrefix(userAgentPrefix) {
+                let value = String(line.dropFirst(userAgentPrefix.count))
+                pendingMetadata?.userAgent = validUserAgent(value)
+                continue
+            }
+
             // Les autres directives M3U (#EXTM3U, #EXTVLCOPT…) ne sont pas des flux.
             guard !line.hasPrefix("#"), let metadata = pendingMetadata else { continue }
             defer { pendingMetadata = nil }
@@ -44,7 +51,8 @@ struct M3UParser {
                     streamURL: streamURL,
                     logoURL: logoURL,
                     group: metadata.group,
-                    guideID: metadata.guideID
+                    guideID: metadata.guideID,
+                    userAgent: metadata.userAgent
                 )
             )
         }
@@ -69,7 +77,8 @@ struct M3UParser {
             name: name.isEmpty ? "Unnamed channel" : name,
             logoURLString: attribute(named: "tvg-logo", in: extinf),
             group: nonEmptyAttribute(named: "group-title", in: extinf),
-            guideID: nonEmptyAttribute(named: "tvg-id", in: extinf)
+            guideID: nonEmptyAttribute(named: "tvg-id", in: extinf),
+            userAgent: attribute(named: "http-user-agent", in: extinf).flatMap(validUserAgent)
         )
     }
 
@@ -81,6 +90,18 @@ struct M3UParser {
             return nil
         }
         return value
+    }
+
+    private func validUserAgent(_ value: String) -> String? {
+        let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard
+            !trimmedValue.isEmpty,
+            !trimmedValue.contains("\r"),
+            !trimmedValue.contains("\n")
+        else {
+            return nil
+        }
+        return trimmedValue
     }
 
     private func attribute(named name: String, in text: String) -> String? {
@@ -103,5 +124,6 @@ struct M3UParser {
         let logoURLString: String?
         let group: String?
         let guideID: String?
+        var userAgent: String?
     }
 }

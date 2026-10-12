@@ -33,6 +33,31 @@ final class M3UParserTests: XCTestCase {
         XCTAssertEqual(channels[0].logoURL, URL(string: "https://playlist.example/catalog/logos/example.png"))
     }
 
+    func testParseReadsUserAgentAttribute() throws {
+        let playlist = """
+        #EXTM3U
+        #EXTINF:-1 http-user-agent="Example Player",Example Channel
+        https://streams.example/channel.m3u8
+        """
+
+        let channels = try M3UParser().parse(playlist)
+
+        XCTAssertEqual(channels[0].userAgent, "Example Player")
+    }
+
+    func testParseReadsVLCUserAgentDirective() throws {
+        let playlist = """
+        #EXTM3U
+        #EXTINF:-1 http-user-agent="Attribute Agent",Example Channel
+        #EXTVLCOPT:http-user-agent=VLC Agent
+        https://streams.example/channel.m3u8
+        """
+
+        let channels = try M3UParser().parse(playlist)
+
+        XCTAssertEqual(channels[0].userAgent, "VLC Agent")
+    }
+
     func testParseRejectsPlaylistWithoutChannels() {
         XCTAssertThrowsError(try M3UParser().parse("#EXTM3U\n# A comment")) { error in
             XCTAssertEqual(error as? M3UParserError, .noPlayableChannels)

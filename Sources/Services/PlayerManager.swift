@@ -6,17 +6,37 @@ final class PlayerManager: ObservableObject {
     @Published private(set) var player: AVPlayer?
     @Published private(set) var isPlaying = false
     @Published private(set) var isTimeshiftAvailable = false
+    @Published private(set) var playbackErrorMessage: String?
 
     private var seekableRange: CMTimeRange?
     private var timeObserver: Any?
     private var playbackStatusObservation: NSKeyValueObservation?
+    private var playbackItemStatusObservation: NSKeyValueObservation?
 
     func play(_ channel: Channel) {
         stop()
 
-        // Une nouvelle instance évite de conserver l'état du flux précédent.
-        let newPlayer = AVPlayer(url: channel.streamURL)
+        // AVURLAsset transmet le User-Agent de la playlist aux requêtes du flux et de ses segments.
+        let assetOptions = channel.userAgent.map { [AVURLAssetHTTPUserAgentKey: $0] }
+        let asset = AVURLAsset(url: channel.streamURL, options: assetOptions)
+        let item = AVPlayerItem(asset: asset)
+        let newPlayer = AVPlayer(playerItem: item)
         player = newPlayer
+
+        playbackItemStatusObservation = item.observe(\.status, options: [.initial, .new]) { [weak self] observedItem, _ in
+            guard observedItem.status == .failed else { return }
+            let message = observedItem.error?.localizedDescription ?? "AVPlayer could not load this stream."
+            DispatchQueue.main.async { [weak self, weak observedItem] in
+                guard
+                    let self,
+                    let observedItem,
+                    self.player?.currentItem === observedItem
+                else {
+                    return
+                }
+                self.playbackErrorMessage = message
+            }
+        }
 
         playbackStatusObservation = newPlayer.observe(
             \.timeControlStatus,
@@ -82,6 +102,8 @@ final class PlayerManager: ObservableObject {
 
     func stop() {
         playbackStatusObservation = nil
+        playbackItemStatusObservation = nil
+        playbackErrorMessage = nil
 
         if let timeObserver, let player {
             player.removeTimeObserver(timeObserver)

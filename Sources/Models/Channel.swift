@@ -9,13 +9,15 @@ struct Channel: Identifiable, Hashable {
     let logoURL: URL?
     let group: String?
     let guideID: String?
+    let userAgent: String?
 
     init(
         name: String,
         streamURL: URL,
         logoURL: URL? = nil,
         group: String? = nil,
-        guideID: String? = nil
+        guideID: String? = nil,
+        userAgent: String? = nil
     ) {
         self.id = streamURL.absoluteString
         self.name = name
@@ -23,5 +25,6 @@ struct Channel: Identifiable, Hashable {
         self.logoURL = logoURL
         self.group = group
         self.guideID = guideID
+        self.userAgent = userAgent
     }
 }
