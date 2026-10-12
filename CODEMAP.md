@@ -36,10 +36,12 @@ ChannelListView
 → PlayerManager.play(channel)
 → AVPlayer
 → PlayerView
-→ AVPlayerViewController
+├── PlayerManager observes seekable DVR ranges
+├── SwiftUI timeshift controls (when a DVR range exists)
+└── AVPlayerViewController native controls
 ```
 
-`PlayerManager` owns one `AVPlayer`. `PlayerView` adapts UIKit's `AVPlayerViewController` to SwiftUI with `UIViewControllerRepresentable`.
+`PlayerManager` owns one `AVPlayer`, tracks whether it is playing, and refreshes the current DVR window from the item's seekable time ranges. Seeking is clamped to that window, and “LIVE” seeks just behind its moving edge. `PlayerView` layers SwiftUI status and timeshift buttons over an `AVPlayerViewController` adapted with `UIViewControllerRepresentable`; the native tvOS controls remain enabled.
 
 ### Persist playlist sources
 
@@ -64,12 +66,13 @@ SettingsView
 | `Sources/Services/M3UParser.swift` | M3U text parsing | Supporting metadata or parsing behavior changes. |
 | `Sources/Services/PlaylistLoader.swift` | Playlist download and decoding | Network loading behavior changes. |
 | `Sources/Services/PlaylistStore.swift` | Source persistence and built-in sources | Adding defaults or persistence migrations. |
-| `Sources/Services/PlayerManager.swift` | AVPlayer lifecycle | Playback behavior changes. |
+| `Sources/Services/PlayerManager.swift` | AVPlayer lifecycle and DVR-window seeking | Playback, pause, or timeshift behavior changes. |
 | `Sources/Views/ChannelListView.swift` | Channel screen and navigation state | Channel list or loading UX changes. |
 | `Sources/Views/SettingsView.swift` | Source selection and editing UI | Playlist-source UX changes. |
-| `Sources/Views/PlayerView.swift` | Full-screen player bridge | Player-controller presentation changes. |
+| `Sources/Views/PlayerView.swift` | Native player bridge and timeshift controls | Player-controller presentation changes. |
 | `Tests/M3UParserTests.swift` | Parser regression coverage | Parser behavior changes. |
 | `Tests/PlaylistStoreTests.swift` | Persistence regression coverage | Store behavior changes. |
+| `Tests/PlayerManagerTests.swift` | Timeshift seeking regression coverage | Seek-window behavior changes. |
 
 ## Non-negotiable generated files
 

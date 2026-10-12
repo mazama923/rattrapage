@@ -22,7 +22,7 @@ final class PlaylistStoreTests: XCTestCase {
 
         XCTAssertTrue(
             store.sources.contains {
-                $0.url == "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlist.m3u8"
+                $0.url == "https://iptv-org.github.io/iptv/countries/fr.m3u"
                     && $0.isBuiltIn
             }
         )

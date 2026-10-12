@@ -11,14 +11,15 @@ A small tvOS 17+ IPTV player, built with Swift and SwiftUI to learn Apple framew
 - Download and parse `#EXTINF` entries with `URLSession` and `async/await`.
 - Browse channels using the tvOS focus engine.
 - Play a channel fullscreen with `AVPlayerViewController`.
+- Pause, rewind or fast-forward by 30 seconds, and return to live when the stream exposes a DVR window.
 
-HLS live streams expose pause and seeking controls automatically when their DVR window supports them. Dedicated timeshift handling is planned for step 3.
+The player checks the HLS seekable time ranges while playback runs. Timeshift buttons appear only when a seekable window is available; the native tvOS playback controls remain available for every stream.
 
 ## Included playlist source
 
-The settings screen provides an opt-in source for the remote [Free-TV community catalogue](https://github.com/Free-TV/IPTV). Rattrapage does not bundle, host, validate, or automatically download this playlist.
+The settings screen provides the French playlist from the remote [iptv-org catalogue](https://github.com/iptv-org/iptv). Rattrapage does not bundle or host this playlist.
 
-It is a large third-party catalogue: stream availability, supported formats, and distribution rights can change independently of this app. Some entries may not be playable by `AVPlayer` (for example, non-HLS streams). Use only streams you are authorized to access.
+It is a third-party catalogue: stream availability, supported formats, and distribution rights can change independently of this app. Some entries may not be playable by `AVPlayer` (for example, non-HLS streams). Use only streams you are authorized to access.
 
 ## Architecture
 
@@ -30,11 +31,11 @@ It is a large third-party catalogue: stream availability, supported formats, and
 | `Sources/Services/M3UParser.swift` | Pure M3U text parsing; easy to test independently from networking. |
 | `Sources/Services/PlaylistLoader.swift` | Remote playlist loading and HTTP validation using `URLSession`. |
 | `Sources/Services/PlaylistStore.swift` | Playlist persistence in `UserDefaults` as JSON and selected-source state. |
-| `Sources/Services/PlayerManager.swift` | Shared `AVPlayer` lifecycle. |
+| `Sources/Services/PlayerManager.swift` | Shared `AVPlayer` lifecycle, playback state, and DVR-window seeking. |
 | `Sources/Views/ChannelListView.swift` | Focusable channel list and screen-state coordination. |
 | `Sources/Views/SettingsView.swift` | Saved playlist selection, creation, and deletion. |
-| `Sources/Views/PlayerView.swift` | SwiftUI bridge to `AVPlayerViewController`. |
-| `Tests/` | Unit tests for playlist parsing and persistence. |
+| `Sources/Views/PlayerView.swift` | SwiftUI status and timeshift controls over the native player controller. |
+| `Tests/` | Unit tests for playlist parsing, persistence, and timeshift seek bounds. |
 
 ## Development workflow
 
