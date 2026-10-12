@@ -4,6 +4,8 @@ SCHEME = "Rattrapage"
 DERIVED_DATA_PATH = ".build"
 BUILD_DESTINATION = "generic/platform=tvOS"
 TEST_DESTINATION = "platform=tvOS Simulator,name=Apple TV 4K (3rd generation)"
+SIMULATOR_NAME = "Apple TV 4K (3rd generation)"
+APP_BUNDLE_ID = "com.rattrapage.app"
 
 [tasks.doctor]
 description = "Check Xcode, XcodeGen, tvOS SDK, and test simulator availability"
@@ -22,13 +24,34 @@ if ! xcodebuild -showsdks | grep -q "appletvos"; then
   exit 1
 fi
 
-if ! xcrun simctl list devices available | grep -Fq "Apple TV 4K (3rd generation)"; then
+if ! xcrun simctl list devices available | grep -Fq "${SIMULATOR_NAME}"; then
   echo "The configured tvOS simulator is unavailable: ${TEST_DESTINATION}" >&2
   echo "Install it in Xcode or update TEST_DESTINATION in .mise.toml." >&2
   exit 1
 fi
 
 echo "Development environment is ready."
+'''
+
+[tasks.simulator]
+description = "Boot and open the configured tvOS simulator"
+run = '''
+set -eu
+
+command -v xcrun >/dev/null || { echo "Missing prerequisite: Xcode command-line tools." >&2; exit 1; }
+
+if ! xcrun simctl list devices available | grep -Fq "${SIMULATOR_NAME}"; then
+  echo "The configured tvOS simulator is unavailable: ${SIMULATOR_NAME}" >&2
+  echo "Install it in Xcode or update SIMULATOR_NAME in .mise.toml." >&2
+  exit 1
+fi
+
+if ! xcrun simctl list devices booted | grep -Fq "${SIMULATOR_NAME}"; then
+  xcrun simctl boot "${SIMULATOR_NAME}"
+fi
+
+xcrun simctl bootstatus "${SIMULATOR_NAME}" -b
+open -a Simulator
 '''
 
 [tasks.generate]
@@ -65,5 +88,21 @@ xcodebuild \
 '''
 
 [tasks.clean]
-description = "Remove local build artifacts"
-run = "rm -rf .build"
+description = "Remove build artifacts and saved playlists from the booted tvOS simulator"
+run = '''
+set -eu
+rm -rf "${DERIVED_DATA_PATH}"
+
+if ! command -v xcrun >/dev/null || ! xcrun simctl list devices booted | grep -Fq "(Booted)"; then
+  echo "No booted simulator found; skipped playlist cleanup."
+  exit 0
+fi
+
+for key in playlistSources selectedPlaylistSourceID; do
+  if xcrun simctl spawn booted defaults read "${APP_BUNDLE_ID}" "$key" >/dev/null 2>&1; then
+    xcrun simctl spawn booted defaults delete "${APP_BUNDLE_ID}" "$key"
+  fi
+done
+
+echo "Removed saved playlist sources from the booted simulator."
+'''
